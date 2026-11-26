@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>консьерж. — демо дэшборда персонала</title>
+<style>
+  @font-face{font-family:"Golos";src:url("assets/golos-400.ttf") format("truetype");font-weight:400;font-display:swap}
+  @font-face{font-family:"Golos";src:url("assets/golos-900.ttf") format("truetype");font-weight:900;font-display:swap}
+  :root{
+    --ink:#080808; --gray:#777; --line:#e9e9e9; --bg:#f8f8f8;
+    --blue:blue; --red:#d0342c; --green:#0e9f6e;
+    --sans:"Golos",Arial,sans-serif;
+    --mono:ui-monospace,Consolas,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--sans);font-weight:400;background:#fff;color:var(--ink);font-size:15px;line-height:1.5}
+  button{font-family:inherit}
+  .shell{max-width:1240px;margin:0 auto;padding:0 32px}
+  header.shell{display:flex;align-items:center;justify-content:space-between;height:92px;gap:18px;flex-wrap:wrap}
+  .logo{font-size:26px;font-weight:400;letter-spacing:-.02em;color:var(--ink)}
+  .logo b::after{content:".";color:var(--blue)}
+  .logo b{font-weight:400}
+  .logo small{color:var(--gray);font-size:13px;margin-left:14px}
+  /* переключатель ролей */
+  .rolebar{display:flex;gap:10px;flex-wrap:wrap}
+  .rbtn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:20px;padding:9px 18px;font-size:14px;cursor:pointer;transition:.15s}
+  .rbtn:hover{border-color:var(--blue);color:var(--blue)}
+  .rbtn.on{border-color:var(--blue);background:var(--blue);color:#fff}
+  .who{margin-top:12px;font-size:13.5px;color:var(--gray)}
+  .who b{color:var(--ink);font-weight:400}
+  hr.rule{border:none;border-top:1px solid var(--line)}
+  /* вкладки */
+  .tabs{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0 8px}
+  .tabs button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:20px;padding:10px 22px;font-size:15px;cursor:pointer;transition:.15s}
+  .tabs button:hover{border-color:var(--blue);color:var(--blue)}
+  .tabs button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+  .noaccess{color:#999;font-size:14.5px;padding:30px 0 40px}
+  .noaccess b{color:var(--ink);font-weight:400}
+  /* канбан */
+  .strip{color:var(--gray);font-size:14px;padding:10px 0 22px}
+  .strip b{color:var(--ink);font-weight:400}
+  .strip .sep{margin:0 10px;color:var(--line)}
+  .strip .digest{margin-top:6px;font-size:13.5px;color:#999}
+  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;align-items:start;padding-bottom:20px}
+  .col{background:var(--bg);border-radius:14px;padding:16px;min-height:400px}
+  .col h3{font-size:16px;font-weight:400;margin-bottom:12px}
+  .col h3 .cnt{color:#999;font-size:14px;margin-left:6px}
+  .col.urgc{background:#fdf3f2}
+  .col.urgc h3{color:var(--red)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:12px;cursor:grab;font-size:15px}
+  .card:hover{border-color:#bbb}
+  .card.drag{opacity:.45}
+  .card.urgc{border-left:4px solid var(--red)}
+  .card .cs{color:var(--ink);line-height:1.35}
+  .card .cm{color:#999;font-size:13px;margin-top:6px}
+  .card .cw{margin-top:10px;font-size:13.5px;color:var(--gray)}
+  .upill{display:inline-block;background:var(--red);color:#fff;border-radius:20px;font-size:11.5px;padding:3px 11px;margin-right:9px;vertical-align:1px}
+  .drop{outline:2px dashed var(--blue);outline-offset:-2px}
+  .readonly-note{font-size:12.5px;color:#999;padding:6px 4px 0}
+  /* AI digest */
+  .aidigest{background:#f2f6ff;border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin:6px 0 24px}
+  .aidigest .lbl{font-size:11.5px;color:var(--blue);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+  .aidigest .txt{font-size:15px;color:var(--ink)}
+  /* аналитика */
+  .kband{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:10px 0 26px}
+  .kpi{background:var(--bg);border-radius:14px;padding:18px 20px}
+  .kpi .v{font-size:42px;font-weight:400;line-height:1.1}
+  .kpi .v.blue{color:var(--blue)}
+  .kpi .l{font-size:13px;color:var(--gray);margin-top:4px}
+  .grid3{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:40px;padding:10px 0 40px}
+  .h2c{font-size:15px;margin-bottom:14px}
+  .hours{display:flex;gap:4px;align-items:flex-end;height:180px}
+  .hours i{flex:1;background:var(--blue);border-radius:3px 3px 0 0;display:block;min-height:2px;opacity:.9}
+  .hours i.peak{background:var(--ink);opacity:1}
+  .hlbl{display:flex;gap:4px;margin-top:6px}
+  .hlbl span{flex:1;text-align:center;font-family:var(--mono);font-size:11px;color:#999}
+  .brow{display:grid;grid-template-columns:130px 1fr 52px;gap:12px;align-items:center;font-size:14.5px;padding:8px 0}
+  .brow .tr{height:11px;background:var(--bg);border-radius:6px;overflow:hidden}
+  .brow .tr i{display:block;height:100%;background:var(--blue);border-radius:6px;opacity:.85}
+  .brow .pc{font-family:var(--mono);font-size:13px;color:var(--gray);text-align:right}
+  .moodline{font-size:15px;margin-bottom:10px}
+  .moodline b{font-weight:400;color:var(--blue);font-size:20px}
+  /* база знаний */
+  .kbwrap{display:grid;grid-template-columns:1.4fr 1fr;gap:40px;padding:10px 0 40px}
+  .kbq{display:flex;gap:10px;margin-bottom:16px}
+  .kbq input{flex:1;border:1px solid var(--line);border-radius:10px;padding:11px 15px;font-size:15px;outline:none}
+  .kbq input:focus{border-color:var(--blue)}
+  .kbq button{border:1px solid var(--blue);background:var(--blue);color:#fff;border-radius:10px;padding:0 20px;font-size:14px;cursor:pointer}
+  .kbitem{border-bottom:1px solid var(--line);padding:14px 4px}
+  .kbitem .q{font-size:15.5px}
+  .kbitem .a{color:var(--gray);font-size:14px;margin-top:4px}
+  .kbitem .cat{display:inline-block;font-size:11.5px;color:var(--blue);border:1px solid var(--blue);border-radius:20px;padding:2px 10px;margin-right:8px;vertical-align:1px}
+  .kbitem .rw{margin-top:8px;display:flex;gap:8px}
+  .kbitem .rw button{border:1px solid var(--line);background:#fff;color:var(--gray);border-radius:8px;padding:5px 14px;font-size:12.5px;cursor:pointer}
+  .kbitem .rw button:hover{border-color:var(--blue);color:var(--blue)}
+  .kbadd{background:var(--bg);border-radius:14px;padding:18px 20px;margin-top:18px}
+  .kbadd label{display:block;font-size:12px;color:#999;margin:10px 0 5px}
+  .kbadd input,.kbadd textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14.5px;outline:none;font-family:var(--sans)}
+  .kbadd textarea{resize:vertical;min-height:60px}
+  .kbadd input:focus,.kbadd textarea:focus{border-color:var(--blue)}
+  .kbadd .acts{margin-top:14px;display:flex;gap:10px}
+  .btn{border:1px solid var(--blue);background:var(--blue);color:#fff;border-radius:10px;padding:10px 20px;font-size:14px;cursor:pointer}
+  .btn.ghost{background:#fff;color:var(--gray);border-color:var(--line)}
+  .btn.ghost:hover{border-color:var(--gray)}
+  .aiq{background:#f2f6ff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-top:18px}
+  .aiq .lbl{font-size:11.5px;color:var(--blue);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+  .aiq .airow{display:flex;gap:10px}
+  .aiq input{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14.5px;outline:none}
+  .aiq input:focus{border-color:var(--blue)}
+  .aiq button{border:1px solid var(--blue);background:#fff;color:var(--blue);border-radius:10px;padding:10px 18px;font-size:13.5px;cursor:pointer}
+  .aians{margin-top:12px;font-size:14.5px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+  /* персонал */
+  .staffrow{display:flex;align-items:center;gap:14px;padding:13px 6px;border-bottom:1px solid var(--line)}
+  .staffrow .info{flex:1}
+  .staffrow .nm{font-size:15.5px}
+  .staffrow .un{font-size:12.5px;color:#999;font-family:var(--mono)}
+  .staffrow .r{font-size:13.5px;color:var(--gray);width:230px}
+  .staffrow .d{font-size:13.5px;color:var(--gray);width:130px}
+  .staffrow .acts{display:flex;gap:8px}
+  .sact{border:1px solid var(--line);background:#fff;color:var(--gray);border-radius:8px;padding:6px 13px;font-size:12.5px;cursor:pointer}
+  .sact:hover{border-color:var(--blue);color:var(--blue)}
+  .sact.sel{border-color:var(--blue);color:var(--blue)}
+  .staffrow .selbox{display:flex;gap:8px;align-items:center}
+  .staffrow select{border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;outline:none}
+  .newcomer{background:#fff7e6;border-radius:12px;padding:14px 18px;margin-bottom:16px;font-size:14px}
+  .newcomer b{font-weight:400}
+  @media(max-width:900px){.board{grid-template-columns:1fr 1fr}.kband,.grid3,.kbwrap{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="shell" style="padding:0;display:flex;align-items:center;justify-content:space-between;height:92px">
+    <div class="logo" style="padding:0"><b>консьерж</b><small>демо дэшборда персонала</small></div>
+    <a href="guest.html" style="font-size:14px;color:var(--blue);text-decoration:none">Демо приложения гостя →</a>
+  </header>
+  <hr class="rule">
+  <div class="rolebar" style="padding:18px 0 4px">
+    <span style="font-size:12px;color:#999;align-self:center;margin-right:6px">Демо-роль:</span>
+    <button class="rbtn" data-r="admin" onclick="setRole('admin')">Администратор</button>
+    <button class="rbtn" data-r="manager" onclick="setRole('manager')">Управляющий</button>
+    <button class="rbtn" data-r="lead" onclick="setRole('lead')">Рук. отдела housekeeping</button>
+    <button class="rbtn" data-r="staff" onclick="setRole('staff')">Сотрудник</button>
+  </div>
+  <div class="who" id="who"></div>
+  <div class="tabs" id="tabs"></div>
+</div>
+
+<div class="shell" id="content"></div>
+
+<div class="shell" id="staff-manage" style="display:none">
+  <h2 class="h2c" style="font-size:15px;margin:10px 0 12px">Персонал отеля</h2>
+  <div class="newcomer" id="newcomer-box" style="display:none">
+    <b>Новички ждут назначения роли:</b> <span id="newcomer-list"></span>
+    <button class="sact" style="margin-left:10px" onclick="assignNewcomer(0)">Назначить сотрудником</button>
+  </div>
+  <div id="staff-list"></div>
+</div>
+
+<div class="shell" style="padding-bottom:50px">
+  <div id="tab-content"></div>
+</div>
+
+<div class="toast" id="toast" style="position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:14px;padding:10px 20px;border-radius:8px;opacity:0;transition:.25s;pointer-events:none;z-index:50"></div>
+
+<script>
+/* ================= демо-данные ================= */
+const DEPARTS = ["housekeeping", "restaurant", "reception", "tech"];
+const ROLES = {
+  admin:  { title:"Администратор", name:"admin", dept:null, tabs:["overview","kb","data","staff"], drag:true, kbEdit:true, staff:"all" },
+  manager:{ title:"Управляющий", name:"manager", dept:null, tabs:["overview","kb","data","staff"], drag:false, kbEdit:true, staff:"all" },
+  lead:   { title:"Рук. отдела housekeeping", name:"lead-housekeeping", dept:"housekeeping", tabs:["overview","kbview","data","staff"], drag:true, kbEdit:false, staff:"lead" },
+  staff:  { title:"Сотрудник", name:"staff1", dept:null, tabs:["overview","kbview","data"], drag:true, kbEdit:false, staff:null },
+};
+
+let KB = [
+  { id:1, cat:"питание", q:"Во сколько завтрак?", kw:"завтрак, еда, утром", a:"Завтрак с 7:00 до 11:00 в обеденном зале на 1 этаже. Для гостей с включённым питанием - бесплатно." },
+  { id:2, cat:"номера", q:"Какой пароль от Wi-Fi?", kw:"wi-fi, wifi, вайфай, интернет, пароль", a:"Сеть Hotel-Guest, пароль welcome2026. Бесплатно на всей территории." },
+  { id:3, cat:"услуги", q:"Можно ли заказать такси?", kw:"такси, аэропорт, трансфер", a:"Да - такси вызовем за 10-15 минут. До аэропорта фиксированный тариф 1500 руб." },
+  { id:4, cat:"правила", q:"Можно ли с животными?", kw:"животные, питомец, собака", a:"Питомцы до 10 кг - разрешены, 1000 руб/сутки. Миски и лежанка бесплатно." },
+];
+let GAPS = [
+  { q:"Есть ли зарядка для электромобиля?", n:4 },
+  { q:"Куда сдать лыжи на хранение?", n:2 },
+];
+let TICKETS = [
+  { id:"t1", s:"Шум после 23:00, гости на лестнице", dept:"reception",  st:"in_work", urg:true,  who:"staff2", time:"03:03", room:"305", guest:"Гость №305" },
+  { id:"t2", s:"Не работает сейф в номере",           dept:"tech",         st:"new",     urg:false, who:null,     time:"07:58", room:"210", guest:"Гость №210" },
+  { id:"t3", s:"Поздний выезд до 14:00",              dept:"reception",    st:"in_work", urg:false, who:"staff1", time:"08:12", room:"112", guest:"Гость №112" },
+  { id:"t4", s:"Дополнительная уборка к 15:00",       dept:"housekeeping", st:"in_work", urg:false, who:"staff1", time:"08:30", room:"417", guest:"Гость №417" },
+  { id:"t5", s:"Столик на двоих на 19:00",            dept:"restaurant",   st:"new",     urg:false, who:null,     time:"08:47", room:"118", guest:"Гость №118" },
+  { id:"t6", s:"Такси в аэропорт на 06:30",           dept:"reception",    st:"new",     urg:false, who:null,     time:"08:51", room:"302", guest:"Гость №302" },
+  { id:"t7", s:"Полотенца (повторно), 2 комплекта",   dept:"housekeeping", st:"new",     urg:false, who:null,     time:"09:04", room:"204", guest:"Гость №204" },
+  { id:"t8", s:"Не открывается окно, дует",           dept:"tech",         st:"new",     urg:false, who:null,     time:"09:20", room:"501", guest:"Гость №501" },
+  { id:"t9", s:"Завтрак в номер на двоих",            dept:"restaurant",   st:"new",     urg:false, who:null,     time:"09:33", room:"311", guest:"Гость №311" },
+  { id:"t10", s:"Пульт от телевизора не работает",    dept:"tech",         st:"done",    urg:false, who:"staff2", time:"08:05", room:"207", guest:"Гость №207" },
+];
+let ROLE = "manager";
+let TAB = "overview";
+let ME = ROLES.manager;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const urgent = x => x.urg && x.st !== "done";
+function toast(m){ const el=$("toast"); el.textContent=m; el.style.opacity=1; setTimeout(()=>el.style.opacity=0, 2200); }
+
+/* ================= роль ================= */
+function setRole(r){
+  ROLE = r; ME = ROLES[r]; TAB = ME.tabs.includes("overview") ? "overview" : ME.tabs[0];
+  document.querySelectorAll(".rbtn").forEach(b => b.classList.toggle("on", b.dataset.r === r));
+  $("who").innerHTML = "Вы вошли как <b>" + ME.title + "</b> @" + ME.name +
+    (ME.dept ? " · отдел: " + ME.dept : "") +
+    (ME.drag ? " · может брать и закрывать тикеты" : " · просмотр без действий");
+  buildTabs(); render();
+  const manage = $("staff-manage"); if (manage) manage.style.display = ME.tabs.includes("staff") ? "" : "none";
+  renderStaff();
+}
+function buildTabs(){
+  const names = { overview:"Обзор", analytics:"Аналитика", kb:"База знаний", data:"Данные", staff:"Персонал" };
+  $("tabs").innerHTML = ME.tabs.map(t =>
+    `<button class="${t===TAB?"on":""}" style="${t===TAB?"background:var(--blue);border-color:var(--blue);color:#fff":""}" onclick="setTab('${t}')">${names[t]}</button>`).join(" ");
+}
+function setTab(t){ TAB = t; buildTabs(); render(); }
+
+/* ================= рендер по вкладке ================= */
+function render(){
+  const c = $("content");
+  if (TAB === "overview") c.innerHTML = overviewHTML();
+  else if (TAB === "analytics") c.innerHTML = analyticsHTML();
+  else if (TAB === "kb") c.innerHTML = kbHTML();
+  else if (TAB === "data") c.innerHTML = dataHTML();
+  if (TAB === "overview") { renderBoard(); renderList(); }
+  if (TAB === "analytics") drawCharts();
+  if (TAB === "kb") renderKB();
+  if (TAB === "data") renderData();
+}
+
+function overviewHTML(){
+  const visible = ticketsFor(ME);
+  const urg = visible.filter(urgent).length;
+  const nw = visible.filter(x => x.st === "new" && !urgent(x)).length;
+  const wk = visible.filter(x => x.st === "in_work" && !urgent(x)).length;
+  let strip = `Сегодня <b>33</b> обращений · бот закрыл <b>73%</b> · средняя реакция <b>11 мин</b>` +
+    (ME.dept ? ` · ваш отдел: <b>housekeeping</b>` : "");
+  let dragNote = ME.drag ? "" : `<div class="readonly-note">Роль «${ME.title}» - просмотр. Брать и закрывать тикеты могут сотрудники и администратор.</div>`;
+  return `
+    <div class="strip">${strip}<div class="digest">ИИ-дайджест за ночь: 14 обращений, 11 закрыто ботом, 1 СРОЧНО решено в 03:12, 2 напоминания отложены («не беспокоить»)</div></div>
+    <div class="aidigest" style="margin-top:0">
+      <div class="lbl">ИИ-дайджест для управляющего</div>
+      <div class="txt">Топ проблем недели: уборка 31%, завтрак 20%, шум 15%. Негатив перехвачен: 3 случая решены до выезда.
+      Рекомендация: пополнить запас полотенец на складе 3-го этажа - третий случай за неделю.</div>
+    </div>
+    ${dragNote}
+    <div class="board" id="board"></div>`;
+}
+
+function ticketsFor(me){
+  if (ME.dept) return TICKETS.filter(t => t.dept === ME.dept);
+  return TICKETS;
+}
+
+function renderBoard(){
+  const visible = ticketsFor(ME);
+  const urg = visible.filter(urgent);
+  const nw = visible.filter(x => x.st === "new" && !urgent(x));
+  const wk = visible.filter(x => x.st === "in_work" && !urgent(x));
+  const dn = visible.filter(x => x.st === "done");
+  const col = (id, name, cnt, cls, inner) => `
+    <div class="col ${cls}" id="col-${id}" ondragover="dragOver(event,this)" ondragleave="dragLeave(this)" ondrop="dropTo(event,this,'${id}')">
+      <h3>${name}<span class="cnt">${cnt}</span></h3>${inner || '<div class="emptycol">пусто</div>'}
+    </div>`;
+  const card = x => `
+    <div class="card${urgent(x)?" urgc":""}" draggable="${ME.drag && x.st!=="done" ? "true":"false"}" data-id="${x.id}"
+         ondragstart="dragStart(event)" ondragend="dragEnd(event)">
+      <div class="cs">${urgent(x)?'<span class="upill">СРОЧНО</span>':""}${esc(x.s)}</div>
+      <div class="cm">${x.time} · №${x.room} · ${x.dept}</div>
+      ${x.who ? `<div class="cw">взял: ${x.who}</div>` : ""}
+    </div>`;
+  $("board").innerHTML =
+    col("urg", "СРОЧНО", urg.length, "urgc", urg.map(card).join("")) +
+    col("new", "Новые", nw.length, "", nw.map(card).join("")) +
+    col("work", "В работе", wk.length, "", wk.map(card).join("")) +
+    col("done", "Закрыто", dn.length, "", dn.map(card).join(""));
+}
+function renderList(){ /* список для узких экранов не нужен в демо */ }
+
+/* drag&drop */
+let dragId = null;
+function dragStart(e){ dragId = e.target.closest(".card").dataset.id; e.target.closest(".card").classList.add("drag"); }
+function dragEnd(e){ e.target.closest(".card")?.classList.remove("drag"); }
+function dragOver(e, col){ e.preventDefault(); col.classList.add("drop"); }
+function dragLeave(col){ col.classList.remove("drop"); }
+function dropTo(e, col, colName){
+  e.preventDefault(); col.classList.remove("drop");
+  const x = TICKETS.find(t => t.id === dragId); dragId = null;
+  if (!x || x.st === "done") return;
+  if (!ME.drag) { toast("Роль «" + ME.title + "» - просмотр, перетаскивание недоступно"); renderBoard(); return; }
+  if (colName === "work" && x.st === "new") { x.st = "in_work"; x.who = "вы (" + ME.name + ")"; toast("Тикет взят в работу"); }
+  else if (colName === "done" && x.st !== "done") {
+    const note = prompt("Что сделано (обязательно):"); if (!note) { renderBoard(); return; }
+    x.st = "done"; x.who = ME.name;
+    toast("Тикет закрыт: " + note);
+  } else { toast("Такое перемещение не предусмотрено"); }
+  renderBoard(); renderList();
+}
+
+/* ================= аналитика ================= */
+function analyticsHTML(){
+  return `
+    <div class="kband">
+      <div class="kpi"><div class="v">147</div><div class="l">обращений за неделю</div></div>
+      <div class="kpi"><div class="v blue">73%</div><div class="l">закрыто ботом без персонала</div></div>
+      <div class="kpi"><div class="v">4.3</div><div class="l">средняя оценка услуг (1-5)</div></div>
+      <div class="kpi"><div class="v">3</div><div class="l">негатив перехвачен до отзыва</div></div>
+      <div class="kpi"><div class="v">11 мин</div><div class="l">медиана реакции персонала</div></div>
+      <div class="kpi"><div class="v">8.2</div><div class="l">индекс настроения гостей</div></div>
+    </div>
+    <div class="grid3">
+      <div><div class="h2c">Обращения по часам (сегодня, всего 33)</div><div class="hours" id="hours"></div><div class="hlbl" id="hlbl"></div></div>
+      <div><div class="h2c">Топ тем недели</div><div id="themes"></div></div>
+      <div><div class="h2c">Индекс настроения (7 дней)</div><div class="moodline">сегодня: <b>8.2</b> / 10</div><div class="moodline" style="color:#999">динамика за неделю - на вкладке аналитики реального дэшборда</div></div>
+    </div>`;
+}
+function drawCharts(){
+  const hours = [0,0,1,0,0,1,2,3,4,2,1,1,2,2,1,1,1,2,2,3,2,1,0,1];
+  const max = Math.max(...hours);
+  $("hours").innerHTML = hours.map((v,i) => `<i style="height:${max?v/max*100:0}%" class="${v===max&&v>0?"peak":""}" title="${String(i).padStart(2,"0")}:00 - ${v}"></i>`).join("");
+  $("hlbl").innerHTML = Array.from({length:24},(_,i) => `<span>${i%3===0?String(i).padStart(2,"0"):""}</span>`).join("");
+  const tmax = 31;
+  $("themes").innerHTML = [["Уборка",31],["Завтрак",20],["Шум",15],["SPA",11],["Парковка",7],["Другое",16]]
+    .map(t => `<div class="brow"><span>${t[0]}</span><div class="tr"><i style="width:${t[1]/tmax*100}%"></i></div><span class="pc">${t[1]}%</span></div>`).join("");
+}
+
+/* ================= база знаний ================= */
+function kbHTML(){
+  const canEdit = ME.kbEdit;
+  return `
+    <div class="kbq">
+      <input id="kbsearch" placeholder="Поиск по базе знаний (например: завтрак)" oninput="renderKB()">
+    </div>
+    <div class="kbwrap">
+      <div>
+        <div class="h2c">Статьи базы знаний (ИИ отвечает гостям только по этим фактам)</div>
+        <div id="kblist"></div>
+        ${canEdit ? kbAddHTML() : `<div class="aiq" style="margin-top:16px">Редактирование базы доступно администратору и управляющему. Ваша роль: ${ME.title}.</div>`}
+      </div>
+      <div>
+        <div class="h2c">Спросить ИИ</div>
+        <div class="aiq">
+          <div class="lbl">Задайте вопрос как гость - ИИ ответит из базы знаний</div>
+          <div class="airow"><input id="ai-input" placeholder="например: есть ли зарядка для электромобиля?" onkeydown="if(event.key==='Enter')askAI()"><button onclick="askAI()">Спросить</button></div>
+          <div class="aians" id="aians">ИИ ответит на вопрос по базе знаний. Если ответа нет - честно скажет «не знаю» и добавит вопрос в пробелы.</div>
+        </div>
+        <div class="h2c" style="margin-top:24px">Пробелы базы знаний (за неделю)</div>
+        <div id="gaps"></div>
+      </div>
+    </div>`;
+}
+function renderKB(){
+  const q = ($("kbsearch")?.value || "").toLowerCase();
+  $("kblist").innerHTML = KB.filter(a => !q || (a.q + a.kw + a.a).toLowerCase().includes(q))
+    .map(a => `
+    <div class="kbitem">
+      <div class="q"><span class="cat">${esc(a.cat)}</span>${esc(a.q)}</div>
+      <div class="a">${esc(a.a)}</div>
+      ${ME.kbEdit ? `<div class="rw"><button onclick="kbDel(${a.id})">Удалить</button></div>` : ""}
+    </div>`).join("") || '<div class="kbitem">Ничего не найдено.</div>';
+  $("gaps").innerHTML = GAPS.map(g => `<div class="kbitem"><span class="q">${esc(g.q)}</span><span class="cnt" style="float:right;color:#999;font-size:12.5px">${g.n}× / нед</span></div>`).join("");
+}
+function kbAddHTML(){
+  return `<div class="kbadd">
+    <label>Категория</label><input id="nk-cat" placeholder="питание / номера / услуги / правила / округа">
+    <label>Вопрос (как формулируют гости)</label><input id="nk-q" placeholder="Во сколько завтрак?">
+    <label>Ключевые слова</label><input id="nk-kw" placeholder="завтрак, еда, утром">
+    <label>Ответ для гостя</label><textarea id="nk-a" placeholder="Завтрак с 7:00 до 11:00 в обеденном зале..."></textarea>
+    <div class="acts"><button class="btn" onclick="kbAdd()">Добавить статью</button></div>
+  </div>`;
+}
+function kbAdd(){
+  const cat = $("nk-cat").value.trim(), q = $("nk-q").value.trim(), kw = $("nk-kw").value.trim(), a = $("nk-a").value.trim();
+  if (!q || !a || !cat) { toast("Заполните категорию, вопрос и ответ"); return; }
+  KB.push({ id: Date.now(), cat, q, kw, a });
+  toast("Статья добавлена - теперь ИИ закрывает такие вопросы сам");
+  renderKB();
+}
+function kbDel(id){ KB = KB.filter(a => a.id !== id); renderKB(); }
+function askAI(){
+  const q = ($("ai-input")?.value || "").toLowerCase();
+  if (!q) return;
+  let best = null, score = 0;
+  for (const a of KB) {
+    const words = (a.kw + " " + a.q).toLowerCase();
+    let sc = 0;
+    for (const w of q.split(/\s+/)) if (w.length > 2 && words.includes(w)) sc += 1;
+    if (sc > score) { score = sc; best = a; }
+  }
+  $("aians").innerHTML = best
+    ? `<b style="font-weight:400;color:var(--ink)">Ответ ИИ:</b> ${esc(best.a)}<div style="font-size:12px;color:#999;margin-top:6px">источник: статья базы знаний</div>`
+    : `В базе знаний нет ответа на этот вопрос. ИИ передал его сотруднику - статья добавлена в пробелы (см. список выше).`;
+}
+
+/* ================= данные (живые таблицы) ================= */
+function dataHTML(){
+  const tables = ["Тикеты", "События", "Оценки", "Запросы оценки", "Типы событий"];
+  let sub = $("data-sub") || "tickets";
+  return `
+    <div class="tabs" style="margin:4px 0 16px">${tables.map(t =>
+      `<button class="${t.toLowerCase()===sub?"on":""}" style="${t.toLowerCase()===sub?"background:var(--blue);border-color:var(--blue);color:#fff":""}border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:20px;padding:9px 20px;font-size:14.5px;cursor:pointer" onclick="setData('${t.toLowerCase()}')">${t}</button>`).join(" ")}</div>
+    <div id="datatable"></div>`;
+}
+let DAT = "tickets";
+function setData(t){ DAT = t; render(); }
+function renderData(){
+  const el = $("datatable");
+  if (!el) return;
+  if (DAT === "tickets") {
+    el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:14.5px">
+      <tr style="text-align:left;color:#999;font-size:12px"><th style="padding:6px 8px">Тикет</th><th>Статус</th><th>Отдел</th><th>Номер</th><th>Взял</th><th>Время</th></tr>
+      ${TICKETS.map(t => `<tr><td style="padding:9px 8px;border-bottom:1px solid var(--line)">${esc(t.s)}</td><td>${t.st}</td><td>${t.dept}</td><td>№${t.room}</td><td>${t.who || "—"}</td><td class="mono">${t.time}</td></tr>`).join("")}</table>`;
+  } else if (DAT === "события" || DAT === "events") {
+    const evs = [
+      ["italian_rest", "g-204", "проживание", "посещение итальянского ресторана"],
+      ["rating_received", "g-204", "проживание", "оценка 4/5"],
+      ["ticket_closed_staff", "staff2", "—", "полотенца доставлены"],
+      ["checkin_started", "g-305", "заезд", "начало заселения"],
+      ["stage_changed", "g-305", "заезд → проживание", "переход этапа"],
+    ];
+    el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:14.5px">
+      <tr style="text-align:left;color:#999;font-size:12px"><th style="padding:6px 8px">Тип</th><th>Актёр</th><th>Этап</th><th>Детали</th></tr>
+      ${evs.map(e => `<tr><td style="padding:9px 8px;border-bottom:1px solid var(--line)" class="mono">${e[0]}</td><td>${e[1]}</td><td>${e[2]}</td><td>${e[3]}</td></tr>`).join("")}</table>`;
+  } else if (DAT === "оценки" || DAT === "ratings") {
+    const rs = [["g-204","полотенца",4],["g-305","заезд",3],["g-118","ресторан",5]];
+    el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:14.5px">
+      <tr style="text-align:left;color:#999;font-size:12px"><th style="padding:6px 8px">Гость</th><th>За что</th><th>Балл</th></tr>
+      ${rs.map(r => `<tr><td style="padding:9px 8px;border-bottom:1px solid var(--line)">${r[0]}</td><td>${r[1]}</td><td>${r[2]} / 5</td></tr>`).join("")}</table>`;
+  } else {
+    el.innerHTML = '<div class="empty">Демо: таблица «' + DAT + '»</div>';
+  }
+}
+
+/* ================= персонал ================= */
+let STAFF = [
+  { u:"admin",  n:"Администратор Отеля", r:"hotel-admin", d:null },
+  { u:"manager",n:"Управляющий Отеля",   r:"manager",     d:null },
+  { u:"lead-hk",n:"Руководитель HK",     r:"dept-manager-housekeeping", d:"housekeeping" },
+  { u:"staff1", n:"Сотрудник Первый",    r:"employee",    d:"reception" },
+  { u:"staff2", n:"Сотрудник Второй",    r:"employee",    d:"housekeeping" },
+  { u:"nov-1",  n:"Новый Сотрудник",     r:"newcomer",    d:null },
+];
+function renderStaff(){
+  const box = $("staff-list"); if (!box) return;
+  const title = { "hotel-admin":"Администратор", "manager":"Управляющий", "employee":"Сотрудник", "newcomer":"Новичок (без прав)" };
+  box.innerHTML = STAFF.map((s,i) => {
+    const canManage = canManageUser(s);
+    const rt = title[s.r] || s.r;
+    return `<div class="staffrow">
+      <div class="info"><div class="nm">${esc(s.n)}</div><div class="un">@${esc(s.u)}</div></div>
+      <div class="r">${esc(rt)}</div><div class="d">${esc(s.d || "—")}</div>
+      <div class="acts">${canManage ? `<button class="sact" onclick="promote(${i})">Назначить сотрудником</button>` : ""}</div>
+    </div>`;
+  }).join("");
+  const nc = STAFF.filter(s => s.r === "newcomer");
+  const nb = $("newcomer-box");
+  if (nb) {
+    nb.style.display = nc.length ? "" : "none";
+    $("newcomer-list").innerHTML = nc.map(s => "@" + s.u).join(", ");
+  }
+}
+function canManageUser(s){
+  if (ROLE === "admin") return s.r !== "hotel-admin";
+  if (ROLE === "manager") return s.r !== "hotel-admin" && s.r !== "manager";
+  if (ROLE === "lead") return s.r === "employee" && s.d === "housekeeping";
+  return false;
+}
+function assignNewcomer(i){
+  const nc = STAFF.find(s => s.r === "newcomer");
+  if (!nc) return;
+  nc.r = "employee"; nc.d = "housekeeping";
+  toast("@" + nc.u + " назначен сотрудником housekeeping");
+  renderStaff();
+}
+
+/* ================= гостевой сценарий (мини-чат) ================= */
+function openGuestChat(){
+  window.open("guest.html", "_blank");
+}
+
+/* ================= утилиты ================= */
+function toast(m){ const el = $("toast"); el.textContent = m; el.style.opacity = 1; setTimeout(() => el.style.opacity = 0, 2200); }
+
+/* старт */
+setRole("manager");
+</script>
+</body>
+</html>
