@@ -30,47 +30,58 @@
   .card h2{font-size:20px;font-weight:400;margin:10px 0 8px}
   .card p{color:var(--gray);font-size:14.5px;margin-bottom:14px}
   .card .go{color:var(--blue);font-size:14.5px}
-  .card .ic{width:44px;height:44px;border-radius:12px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:14px}
   .hint{background:var(--bg);border-radius:14px;padding:20px 24px;margin-bottom:14px}
-  .hint h3{font-size:15px;font-weight:400;margin-bottom:8px}
   .hint p{color:var(--gray);font-size:13.5px}
   footer{margin-top:46px;border-top:1px solid var(--line);padding-top:20px;color:#999;font-size:12.5px;display:flex;justify-content:space-between}
   @media(max-width:760px){.cards{grid-template-columns:1fr}}
+  :root{--blue:#2547ff;--gray:#626673}
+  .hint h2{font-size:15px;margin-bottom:8px}
+  footer{gap:12px;align-items:center;flex-wrap:wrap;padding-bottom:28px;color:var(--gray)}
+  footer button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;color:var(--blue);cursor:pointer}
+  @media(max-width:560px){.wrap{padding:0 16px}h1{font-size:28px}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="logo"><b>консьерж</b><small>интерактивное демо платформы</small></div>
+    <div class="logo"><b>консьерж</b><small>демо для отеля</small></div>
   </header>
   <hr class="rule">
-  <h1>Две стороны одной системы</h1>
-  <p class="sub">Демо показывает обе половины Videns: гостя, который решает вопросы через ИИ-консьержа, и персонал, который видит те же события в тикетах и метриках. Откройте обе страницы в соседних вкладках - заказ из приложения гостя появится в очереди дэшборда.</p>
-
+  <h1>От просьбы гостя до оценки услуги</h1>
+  <p class="sub">В роли гостя отправьте просьбу о полотенцах. В панели персонала возьмите заявку, запишите результат и вернитесь в чат, чтобы оценить услугу.</p>
   <div class="cards">
-    <a class="card" href="dashboard.html">
-      <div class="ic">🖥</div>
-      <h2>Дэшборд персонала</h2>
-      <p>Канбан обращений, аналитика, база знаний, персонал с ролями. Переключайте демо-роли: администратор, управляющий, руководитель отдела и сотрудник видят разное.</p>
-      <span class="go">Открыть дэшборд →</span>
-    </a>
     <a class="card" href="guest.html">
-      <div class="ic">💬</div>
-      <h2>Приложение гостя</h2>
-      <p>Чат с ИИ-консьержем в телефоне: просьбы, брони, оценки 1-5. ИИ отвечает из базы знаний, создаёт тикеты и ведёт события пути гостя.</p>
-      <span class="go">Открыть приложение гостя →</span>
+      <h2>Чат гостя</h2>
+      <p>Узнайте время завтрака, попросите полотенца или сообщите о шуме. Следите за статусом и оцените выполненную заявку.</p>
+      <span class="go">Открыть чат →</span>
+    </a>
+    <a class="card" href="dashboard.html">
+      <h2>Панель персонала</h2>
+      <p>Примите обращение в нужной службе. В аналитике можно открыть ту же заявку и проследить её от сообщения до оценки.</p>
+      <span class="go">Открыть панель →</span>
     </a>
   </div>
-
   <div class="hint">
-    <h3>Как демо связано</h3>
-    <p>Заказ из приложения гостя - это тот же тикет, который горничная берёт в работу на дэшборде. Оценка гостя падает в CSAT услуги. Так работает и настоящая платформа: одна событийная база соединяет гостя, персонал и управляющего.</p>
+    <h2>Ещё два сценария</h2>
+    <p>Сравните автоматический ответ о завтраке с вопросом о зарядке. Добавьте недостающую статью как администратор и задайте вопрос снова. Для срочной очереди попробуйте «Жалоба на шум».</p>
   </div>
-
   <footer>
-    <div>консьерж. · демо-стенд · 2026</div>
-    <div>Проект для стипендиального конкурса «Система»</div>
+    <p id="storage-note">Оба режима используют общую сессию в этом браузере. Можно открыть страницы в соседних вкладках.</p>
+    <button type="button" id="reset">Начать заново</button>
+    <span id="reset-status" role="status"></span>
   </footer>
 </div>
+<script src="demo.js"></script>
+<script>
+  if (location.protocol === "file:") {
+    document.getElementById("storage-note").textContent = "Для связи режимов откройте демо через локальный сервер: node serve.cjs.";
+  }
+  document.getElementById("reset").addEventListener("click", async () => {
+    if (confirm("Очистить заявки, оценки и изменения базы знаний в этой демо-сессии?")) {
+      await Demo.reset();
+      document.getElementById("reset-status").textContent = "Сессия сброшена.";
+    }
+  });
+</script>
 </body>
 </html>
